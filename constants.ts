@@ -11,7 +11,7 @@ export interface ExtendedRadioInfo extends RadioInfo {
 export const RADIO_DATA: ExtendedRadioInfo = {
   name: "Bourgade FM",
   logo: "https://cdn.onlineradiobox.com/img/l/4/152174.v1.png",
-  streamUrl: "https://radiobourgadefm.ice.infomaniak.ch/radiobourgadefm-96.mp3",
+  streamUrl: "https://a10.asurahosting.com:8020/radio.mp3?type=.mp3",
   description: "La radio des bourgs, faubourgs et bourgades. Une station patriote et professionnelle au cœur du Burkina Faso.",
   frequency: "94.3 MHz",
   slogan: "C'est l'auditoire qui décide !",

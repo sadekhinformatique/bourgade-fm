@@ -33,7 +33,7 @@ export const getRadioFacts = async () => {
       }
     });
 
-    return JSON.parse(response.text);
+    return JSON.parse(response.text || "[]");
   } catch (error) {
     console.error("Error fetching facts from Gemini:", error);
     return [

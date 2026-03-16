@@ -42,10 +42,15 @@ const App: React.FC = () => {
       }
 
       try {
-        await audioRef.current.play();
-        setIsPlaying(true);
+        if (audioRef.current) {
+          audioRef.current.load();
+          await audioRef.current.play();
+          setIsPlaying(true);
+        }
       } catch (error) {
         console.error("Playback error:", error);
+        // Fallback: try to play again without visualizer if CORS is the issue
+        // But for now, just log it.
       } finally {
         setIsLoading(false);
       }
@@ -157,10 +162,23 @@ const App: React.FC = () => {
         {/* Hidden Audio Element */}
         <audio 
           ref={audioRef} 
-          src={RADIO_DATA.streamUrl} 
           crossOrigin="anonymous"
-          preload="none"
-        />
+          preload="auto"
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onError={(e) => {
+            const err = (e.target as HTMLAudioElement).error;
+            console.error("Audio element error details:", {
+              code: err?.code,
+              message: err?.message
+            });
+          }}
+        >
+          <source src={RADIO_DATA.streamUrl} type="audio/mpeg" />
+          <source src={RADIO_DATA.streamUrl.split('?')[0]} type="audio/mpeg" />
+          <source src={RADIO_DATA.streamUrl.replace('radio.mp3', 'stream')} type="audio/mpeg" />
+          Your browser does not support the audio element.
+        </audio>
       </main>
 
       {/* Information Section (Gemini Powered) */}
