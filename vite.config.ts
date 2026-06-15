@@ -5,7 +5,8 @@ export default defineConfig({
   plugins: [react()],
   define: {
     // Injection de la variable d'environnement pour le client
-    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || ''),
+    'process.env.API_KEY': JSON.stringify(process.env.GEMINI_API_KEY || process.env.API_KEY || ''),
+    'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY || process.env.API_KEY || ''),
   },
   build: {
     outDir: 'dist',

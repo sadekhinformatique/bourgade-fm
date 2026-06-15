@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import Hls from 'hls.js';
 import { RADIO_DATA, COLORS } from './constants';
 import { getRadioFacts } from './services/geminiService';
 import { RadioFact } from './types';
@@ -17,6 +18,30 @@ const App: React.FC = () => {
 
   useEffect(() => {
     getRadioFacts().then(setFacts);
+  }, []);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    const url = RADIO_DATA.streamUrl;
+    let hls: Hls | null = null;
+
+    if (url.includes('.m3u8')) {
+      if (Hls.isSupported()) {
+        hls = new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(audioRef.current);
+      } else if (audioRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+        audioRef.current.src = url;
+      }
+    } else {
+      audioRef.current.src = url;
+    }
+
+    return () => {
+      if (hls) {
+        hls.destroy();
+      }
+    };
   }, []);
 
   const initAudio = useCallback(() => {
@@ -43,7 +68,9 @@ const App: React.FC = () => {
 
       try {
         if (audioRef.current) {
-          audioRef.current.load();
+          if (!RADIO_DATA.streamUrl.includes('.m3u8')) {
+            audioRef.current.load();
+          }
           await audioRef.current.play();
           setIsPlaying(true);
         }
@@ -173,12 +200,7 @@ const App: React.FC = () => {
               message: err?.message
             });
           }}
-        >
-          <source src={RADIO_DATA.streamUrl} type="audio/mpeg" />
-          <source src={RADIO_DATA.streamUrl.split('?')[0]} type="audio/mpeg" />
-          <source src={RADIO_DATA.streamUrl.replace('radio.mp3', 'stream')} type="audio/mpeg" />
-          Your browser does not support the audio element.
-        </audio>
+        />
       </main>
 
       {/* Information Section (Gemini Powered) */}

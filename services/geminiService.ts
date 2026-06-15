@@ -1,7 +1,11 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+if (!apiKey) {
+    console.error("API key is missing. Please provide a valid API key via GEMINI_API_KEY.");
+}
+const ai = new GoogleGenAI({ apiKey: apiKey || 'missing_key' });
 
 const BOURGADE_CONTEXT = `
 Bourgade FM émet sur 94.3 à Ouahigouya (Burkina Faso). 
