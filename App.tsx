@@ -13,6 +13,7 @@ const App: React.FC = () => {
   const [facts, setFacts] = useState<RadioFact[]>([]);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [source, setSource] = useState<MediaElementAudioSourceNode | null>(null);
+  const [currentStreamIndex, setCurrentStreamIndex] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -20,9 +21,27 @@ const App: React.FC = () => {
     getRadioFacts().then(setFacts);
   }, []);
 
+  const handleError = useCallback(() => {
+    if (currentStreamIndex < RADIO_DATA.streamUrls.length - 1) {
+        console.log(`Stream ${RADIO_DATA.streamUrls[currentStreamIndex]} failed, switching to fallback...`);
+        setCurrentStreamIndex(prev => prev + 1);
+        setTimeout(() => {
+            if (audioRef.current) {
+                audioRef.current.play().catch(console.error);
+                setIsPlaying(true);
+                setIsLoading(false);
+            }
+        }, 500);
+    } else {
+        console.error("All streams failed.");
+        setIsPlaying(false);
+        setIsLoading(false);
+    }
+  }, [currentStreamIndex]);
+
   useEffect(() => {
     if (!audioRef.current) return;
-    const url = RADIO_DATA.streamUrl;
+    const url = RADIO_DATA.streamUrls[currentStreamIndex];
     let hls: Hls | null = null;
 
     if (url.includes('.m3u8')) {
@@ -30,6 +49,12 @@ const App: React.FC = () => {
         hls = new Hls();
         hls.loadSource(url);
         hls.attachMedia(audioRef.current);
+        hls.on(Hls.Events.ERROR, function (event, data) {
+          if (data.fatal) {
+             console.error("HLS fatal error:", data);
+             handleError();
+          }
+        });
       } else if (audioRef.current.canPlayType('application/vnd.apple.mpegurl')) {
         audioRef.current.src = url;
       }
@@ -42,7 +67,7 @@ const App: React.FC = () => {
         hls.destroy();
       }
     };
-  }, []);
+  }, [currentStreamIndex, handleError]);
 
   const initAudio = useCallback(() => {
     if (!audioContext && audioRef.current) {
@@ -68,7 +93,7 @@ const App: React.FC = () => {
 
       try {
         if (audioRef.current) {
-          if (!RADIO_DATA.streamUrl.includes('.m3u8')) {
+          if (!RADIO_DATA.streamUrls[currentStreamIndex].includes('.m3u8')) {
             audioRef.current.load();
           }
           await audioRef.current.play();
@@ -76,8 +101,7 @@ const App: React.FC = () => {
         }
       } catch (error) {
         console.error("Playback error:", error);
-        // Fallback: try to play again without visualizer if CORS is the issue
-        // But for now, just log it.
+        handleError();
       } finally {
         setIsLoading(false);
       }
@@ -199,6 +223,7 @@ const App: React.FC = () => {
               code: err?.code,
               message: err?.message
             });
+            handleError();
           }}
         />
       </main>

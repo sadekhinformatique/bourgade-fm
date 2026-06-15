@@ -2,7 +2,7 @@
 export interface RadioInfo {
   name: string;
   logo: string;
-  streamUrl: string;
+  streamUrls: string[];
   description: string;
 }
 
